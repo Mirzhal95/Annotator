@@ -1,13 +1,15 @@
+import { ADD, REMOVE } from "../actionTypes/actionTypes";
+
 const initialState = {
   file: [],
 };
 
 const fileReducer = (state = initialState, action) => {
   switch (action.type) {
-    case "ADD":
+    case ADD:
       return { ...state, file: state.file.concat(action.payload) };
 
-    case "REMOVE":
+    case REMOVE:
       return { ...state, file: [] };
 
     default:

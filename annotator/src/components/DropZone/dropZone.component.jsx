@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@material-ui/core";
 import styles from "./dropZone.module.css";
 import { useSelector, useDispatch } from "react-redux";
+import { ReactComponent as ReactLogo } from "../../assets/plan.svg";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { ADD } from "../../store/actionTypes/actionTypes";
 
 function DropZone(props) {
   const fileSelector = useSelector((state) => state.fileReducer.file);
+  const isEditMode = useSelector((state) => state.editReducer.isEditMode);
   const dispatch = useDispatch();
-  const [rejectedFileType, setRejectedFileType] = useState(false);
-  // const [files, setFiles] = useState([]);
   const {
-    acceptedFiles,
     fileRejections,
     isDragReject,
     isDragActive,
@@ -20,7 +21,7 @@ function DropZone(props) {
     accept: "image/jpeg, image/png",
     onDrop: (acceptedFiles) => {
       dispatch({
-        type: "ADD",
+        type: ADD,
         payload: acceptedFiles.map((file) =>
           Object.assign(file, {
             preview: URL.createObjectURL(file),
@@ -32,7 +33,7 @@ function DropZone(props) {
 
   const thumbs = fileSelector.map((file) => (
     <div key={file.name}>
-      <img style={{ width: "100%", height: "95vh" }} src={file.preview} />
+      <img className={styles.uploadedImage} src={file.preview} />
     </div>
   ));
 
@@ -47,34 +48,69 @@ function DropZone(props) {
   const isFileTooLarge =
     fileRejections.length > 0 && fileRejections[0].size > props.maxSize;
 
-  // const files = acceptedFiles.map((file) => (
-  //   <li key={file.path}>
-  //     {file.path} - {file.size} bytes
-  //   </li>
-  // ));
-
   return (
     <section className={styles.container}>
-      <div {...getRootProps({ className: styles.dropZone })}>
-        <input {...getInputProps()} />
-        {fileSelector.length === 0 && (
-          <div>
-            <h3>Click here or drop a file to upload!</h3>
-            <Button
-              className={styles.button}
-              variant="contained"
-              color="primary"
-            >
-              Load image
-            </Button>
-          </div>
-        )}
-        {thumbs}
-        {isDragReject && <h3>This file type not supported, sorry!</h3>}
-        {isDragActive && !isDragReject && <h3>Drop it AS IF it's hot!</h3>}
-        {isFileTooLarge && <div>File is too large.</div>}
-        {fileRejections.length > 0 && "File not supported"}
-      </div>
+      {isEditMode && (
+        <TransformWrapper>
+          {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
+            <>
+              <Button
+                className={styles.zoomIn}
+                variant="contained"
+                color="primary"
+                onClick={zoomIn}
+              >
+                Zoom in
+              </Button>
+              <Button
+                className={styles.zoomOut}
+                variant="contained"
+                color="secondary"
+                onClick={zoomOut}
+              >
+                Zoom out
+              </Button>
+              <Button
+                className={styles.reset}
+                variant="contained"
+                onClick={resetTransform}
+              >
+                x
+              </Button>
+
+              <TransformComponent>
+                <div {...getRootProps({ className: styles.dropZone })}>
+                  {fileSelector.length > 0 && <div>{thumbs}</div>}
+                </div>
+              </TransformComponent>
+            </>
+          )}
+        </TransformWrapper>
+      )}
+
+      {fileSelector.length > 0 && !isEditMode && (
+        <div {...getRootProps({ className: styles.dropZone })}>
+          {fileSelector.length > 0 && <div>{thumbs}</div>}
+        </div>
+      )}
+
+      {fileSelector.length === 0 && (
+        <div {...getRootProps({ className: styles.dropZone })}>
+          {fileSelector.length === 0 && !isEditMode && (
+            <input {...getInputProps()} />
+          )}
+          {fileSelector.length === 0 && (
+            <div>
+              <span>{isDragActive ? <ReactLogo /> : <ReactLogo />}</span>
+              <h3>Click Yellow zone or drop an image to upload!</h3>
+            </div>
+          )}
+          {isDragReject && <h3>This file type not supported, sorry!</h3>}
+          {isDragActive && !isDragReject && <h3>Drop it AS IF it's hot!</h3>}
+          {isFileTooLarge && <div>File is too large.</div>}
+          {fileRejections.length > 0 && "File not supported"}
+        </div>
+      )}
     </section>
   );
 }
